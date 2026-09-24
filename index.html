@@ -19,10 +19,9 @@ input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.12)
 button{border:0;border-radius:10px;padding:12px 15px;font-weight:600;cursor:pointer;font-size:14px}
 .primary{background:var(--primary);color:#fff}.secondary{background:#eef2ff;color:#1e40af}.danger{background:#fee2e2;color:#991b1b}.ghost{background:#f3f4f6;color:#374151}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:18px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 5px 18px rgba(15,23,42,.05);display:flex;flex-direction:column;min-height:155px;cursor:grab;transition:.18s}.card.dragging{opacity:.45;cursor:grabbing}.card.drag-over{border:2px dashed var(--primary);transform:scale(1.01)}
-.card-main{display:block;text-decoration:none;color:inherit;flex:1}.icon{width:42px;height:42px;border-radius:11px;background:#eff6ff;color:#2563eb;display:grid;place-items:center;font-weight:800;margin-bottom:13px}
-.card h2{font-size:17px;margin:0 0 6px}.url{font-size:13px;color:var(--muted);word-break:break-all}.actions{display:flex;gap:8px;margin-top:15px}
-.actions button{flex:1;padding:9px 10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 5px 18px rgba(15,23,42,.05);display:flex;flex-direction:column;min-height:0;height:78px;padding:10px 12px;cursor:grab;transition:.18s}.card.dragging{opacity:.45;cursor:grabbing}.card.drag-over{border:2px dashed var(--primary);transform:scale(1.01)}
+.card-main{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;min-width:0;flex:1}.icon{width:32px;height:32px;min-width:32px;border-radius:8px;background:#eff6ff;color:#2563eb;display:grid;place-items:center;font-weight:800;margin:0}
+.card h2{font-size:15px;line-height:18px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.url{font-size:11px;line-height:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.card-main > div:not(.icon){min-width:0;flex:1}.actions{display:flex;gap:5px;margin-top:5px;justify-content:flex-end}.actions button{flex:0 0 auto;width:32px;height:26px;padding:0;border-radius:7px;font-size:15px;line-height:1}
 .empty{text-align:center;color:var(--muted);padding:45px 15px;grid-column:1/-1}
 .modal{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:10}
 .modal.open{display:flex}.dialog{background:#fff;border-radius:18px;width:min(520px,100%);padding:22px;box-shadow:0 25px 70px rgba(0,0,0,.25)}
@@ -89,12 +88,12 @@ function renderizar(){
  <article class="card" draggable="true" data-id="${x.id}">
   <a class="card-main" href="${escapeHtml(x.url)}" target="_blank" rel="noopener noreferrer">
    <div class="icon">${escapeHtml(x.nome.charAt(0).toUpperCase())}</div>
-   <h2>${escapeHtml(x.nome)}</h2>
-   <div class="url">${escapeHtml(x.url)}</div>
+   <div><h2>${escapeHtml(x.nome)}</h2>
+   <div class="url">${escapeHtml(x.url)}</div></div>
   </a>
   <div class="actions">
-   <button class="secondary" onclick="editar('${x.id}')">Editar</button>
-   <button class="danger" onclick="excluir('${x.id}')">Excluir</button>
+   <button class="secondary" title="Editar" aria-label="Editar" onclick="editar('${x.id}')">✏️</button>
+   <button class="danger" title="Excluir" aria-label="Excluir" onclick="excluir('${x.id}')">🗑️</button>
   </div>
  </article>`).join('');
  bindDrag();
