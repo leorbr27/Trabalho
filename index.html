@@ -19,7 +19,7 @@ input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.12)
 button{border:0;border-radius:10px;padding:12px 15px;font-weight:600;cursor:pointer;font-size:14px}
 .primary{background:var(--primary);color:#fff}.secondary{background:#eef2ff;color:#1e40af}.danger{background:#fee2e2;color:#991b1b}.ghost{background:#f3f4f6;color:#374151}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:18px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 5px 18px rgba(15,23,42,.05);display:flex;flex-direction:column;min-height:155px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 5px 18px rgba(15,23,42,.05);display:flex;flex-direction:column;min-height:155px;cursor:grab;transition:.18s}.card.dragging{opacity:.45;cursor:grabbing}.card.drag-over{border:2px dashed var(--primary);transform:scale(1.01)}
 .card-main{display:block;text-decoration:none;color:inherit;flex:1}.icon{width:42px;height:42px;border-radius:11px;background:#eff6ff;color:#2563eb;display:grid;place-items:center;font-weight:800;margin-bottom:13px}
 .card h2{font-size:17px;margin:0 0 6px}.url{font-size:13px;color:var(--muted);word-break:break-all}.actions{display:flex;gap:8px;margin-top:15px}
 .actions button{flex:1;padding:9px 10px}
@@ -60,19 +60,24 @@ button{border:0;border-radius:10px;padding:12px 15px;font-weight:600;cursor:poin
 </div>
 
 <script>
-const STORAGE_KEY='trabalho_favoritos_v1';
-const defaults=[
- {id:crypto.randomUUID(),nome:'OGMO-ES — Intranet',url:'https://www.ogmoes.com.br/intranet'},
- {id:crypto.randomUUID(),nome:'OGMO-ES — Mobile',url:'https://www.ogmoes.com.br/mobile'},
- {id:crypto.randomUUID(),nome:'Praticagem — Manobras Previstas',url:'https://www.praticagem.org/manobrasprevistas'}
+const STORAGE_KEY='trabalho_favoritos_v2';
+const DEFAULTS=[
+ {id:'ogmo-intranet',nome:'OGMO-ES — Intranet',url:'https://www.ogmoes.com.br/intranet'},
+ {id:'ogmo-mobile',nome:'OGMO-ES — Mobile',url:'https://www.ogmoes.com.br/mobile'},
+ {id:'praticagem-manobras',nome:'Praticagem — Manobras Previstas',url:'https://www.praticagem.org/manobrasprevistas'}
 ];
-let favoritos=carregar(), editando=null;
+let favoritos=carregar(), editando=null, dragId=null;
 
 function carregar(){
- try{const x=JSON.parse(localStorage.getItem(STORAGE_KEY));return Array.isArray(x)?x:defaults}catch(e){return defaults}
+ try{
+  const x=JSON.parse(localStorage.getItem(STORAGE_KEY));
+  if(Array.isArray(x)) return x;
+  const antigo=JSON.parse(localStorage.getItem('trabalho_favoritos_v1'));
+  return Array.isArray(antigo)?antigo:DEFAULTS.map(x=>({...x}));
+ }catch(e){return DEFAULTS.map(x=>({...x}))}
 }
 function persistir(){localStorage.setItem(STORAGE_KEY,JSON.stringify(favoritos))}
-function inicializar(){if(!localStorage.getItem(STORAGE_KEY))persistir();renderizar()}
+function inicializar(){persistir();renderizar()}
 function normalizarUrl(u){u=u.trim();if(!/^https?:\/\//i.test(u))u='https://'+u;return u}
 function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 function renderizar(){
@@ -81,7 +86,7 @@ function renderizar(){
  const grid=document.getElementById('grid');
  if(!lista.length){grid.innerHTML='<div class="empty">Nenhum favorito encontrado.<br>Use <b>+ Novo favorito</b> para adicionar um site.</div>';return}
  grid.innerHTML=lista.map(x=>`
- <article class="card">
+ <article class="card" draggable="true" data-id="${x.id}">
   <a class="card-main" href="${escapeHtml(x.url)}" target="_blank" rel="noopener noreferrer">
    <div class="icon">${escapeHtml(x.nome.charAt(0).toUpperCase())}</div>
    <h2>${escapeHtml(x.nome)}</h2>
@@ -92,6 +97,21 @@ function renderizar(){
    <button class="danger" onclick="excluir('${x.id}')">Excluir</button>
   </div>
  </article>`).join('');
+ bindDrag();
+}
+function bindDrag(){
+ document.querySelectorAll('.card').forEach(card=>{
+  card.addEventListener('dragstart',e=>{dragId=card.dataset.id;card.classList.add('dragging');e.dataTransfer.effectAllowed='move'});
+  card.addEventListener('dragend',()=>{card.classList.remove('dragging');document.querySelectorAll('.card').forEach(c=>c.classList.remove('drag-over'));dragId=null});
+  card.addEventListener('dragover',e=>{e.preventDefault();if(dragId&&dragId!==card.dataset.id)card.classList.add('drag-over')});
+  card.addEventListener('dragleave',()=>card.classList.remove('drag-over'));
+  card.addEventListener('drop',e=>{e.preventDefault();card.classList.remove('drag-over');if(!dragId||dragId===card.dataset.id)return;reordenar(dragId,card.dataset.id)});
+ });
+}
+function reordenar(fromId,toId){
+ const from=favoritos.findIndex(x=>x.id===fromId), to=favoritos.findIndex(x=>x.id===toId);
+ if(from<0||to<0)return;
+ const [item]=favoritos.splice(from,1);favoritos.splice(to,0,item);persistir();renderizar();
 }
 function openModal(id=null){
  editando=id;
@@ -114,8 +134,7 @@ function salvar(){
 }
 function editar(id){openModal(id)}
 function excluir(id){
- const item=favoritos.find(x=>x.id===id);
- if(!item)return;
+ const item=favoritos.find(x=>x.id===id);if(!item)return;
  if(confirm('Excluir o favorito “'+item.nome+'”?')){favoritos=favoritos.filter(x=>x.id!==id);persistir();renderizar()}
 }
 function exportar(){
@@ -130,10 +149,8 @@ function importar(event){
   if(!Array.isArray(data)||data.some(x=>!x.nome||!x.url))throw new Error();
   favoritos=data.map(x=>({id:x.id||crypto.randomUUID(),nome:String(x.nome),url:normalizarUrl(String(x.url))}));
   persistir();renderizar();alert('Favoritos importados com sucesso.');
- }catch(e){alert('Arquivo inválido. Use um JSON exportado por esta página.')}
- event.target.value='';
- };
- reader.readAsText(file)
+ }catch(e){alert('Arquivo inválido. Use um JSON exportado por esta página.')}event.target.value='';
+ };reader.readAsText(file)
 }
 document.getElementById('search').addEventListener('input',renderizar);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
