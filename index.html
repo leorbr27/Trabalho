@@ -30,6 +30,8 @@ button{border:0;border-radius:10px;padding:12px 15px;font-weight:600;cursor:poin
 .dialog h2{margin:0 0 18px}.field{margin-bottom:14px}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}.dialog-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}
 .note{font-size:12px;color:var(--muted);margin:15px 2px 0}
 @media(max-width:600px){h1{font-size:25px}.grid{grid-template-columns:1fr}.toolbar{padding:12px}}
+
+.last-update{width:100%;text-align:center;font-size:10px;line-height:1.3;color:#8a8f98;margin:18px 0 10px;padding:0 12px;font-weight:400;}
 </style>
 </head>
 <body>
@@ -165,5 +167,6 @@ document.getElementById('search').addEventListener('input',renderizar);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
 inicializar();
 </script>
+<div class="last-update" aria-label="Última atualização">Última atualização: 24/09/2026, 22:02</div>
 </body>
 </html>
